@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>USC Dining — {{ date }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f5f5;font-family:Arial,Helvetica,sans-serif;">
+
+<!-- Wrapper -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f5f5;">
+  <tr>
+    <td align="center" style="padding:24px 12px;">
+
+      <!-- Card -->
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+             style="max-width:600px;width:100%;background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+        <!-- ── HEADER ── -->
+        <tr>
+          <td style="background-color:#990000;padding:24px 32px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td valign="middle">
+                  {% if logo_url %}
+                  <img src="{{ logo_url }}" alt="USC Dining Daily" width="180" style="display:block;border:0;" />
+                  {% else %}
+                  <p style="margin:0;font-size:12px;color:#ffcc00;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">USC Hospitality</p>
+                  <h1 style="margin:6px 0 0;font-size:26px;color:#ffffff;font-weight:bold;line-height:1.2;">Today&rsquo;s Dining Menus</h1>
+                  {% endif %}
+                  <p style="margin:8px 0 0;font-size:15px;color:#ffcc00;">{{ date }}</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ── TODAY'S HIGHLIGHTS ── -->
+        <tr>
+          <td style="padding:20px 32px 8px;">
+            <p style="margin:0 0 12px;font-size:11px;font-weight:bold;color:#990000;text-transform:uppercase;letter-spacing:1px;">Today's Highlights</p>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                {% for hall_name, meals in halls.items() %}
+                {% if hall_name in hall_highlights %}
+                {% set highlight = find_highlight(hall_name, meals) %}
+                <td width="33%" valign="top" style="padding:0 6px 0 0;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                         style="background-color:#fff8e1;border-top:3px solid #ffcc00;border-radius:4px;">
+                    <tr>
+                      <td style="padding:10px 12px;">
+                        <p style="margin:0 0 6px;font-size:12px;font-weight:bold;color:#333333;">{{ highlight.label if highlight else "—" }}</p>
+                        <p style="margin:0 0 4px;font-size:10px;color:#888888;text-transform:uppercase;letter-spacing:0.5px;">{{ hall_name }}</p>
+                        {% if highlight and highlight.entries %}
+                          {% for entry in highlight.entries %}
+                          <p style="margin:0;font-size:12px;color:#555555;line-height:1.7;">
+                            {{ entry.item }}
+                            {% for pref in entry.preferences %}
+                              {% if pref in preference_labels %}
+                                {% set label, icon = preference_labels[pref] %}
+                                <span title="{{ label }}">{{ icon }}</span>
+                              {% endif %}
+                            {% endfor %}
+                          </p>
+                          {% endfor %}
+                        {% else %}
+                          <p style="margin:0;font-size:12px;color:#aaaaaa;font-style:italic;">Not available today</p>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                {% endif %}
+                {% endfor %}
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- ── LEGEND ── -->
+        <tr>
+          <td style="padding:16px 32px;background-color:#f9f9f9;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;">
+            <p style="margin:0;font-size:12px;color:#555555;">
+              <strong>Key:</strong>&nbsp;
+              🌱&nbsp;Vegan&nbsp;&nbsp;&nbsp;
+              🥦&nbsp;Vegetarian&nbsp;&nbsp;&nbsp;
+              ☪&nbsp;Halal
+            </p>
+          </td>
+        </tr>
+
+        <!-- ── DINING HALLS ── -->
+        {% set ns = namespace(has_any=false) %}
+        {% for hall_name, meals in halls.items() %}
+          {% set ordered = ordered_meals(meals) %}
+
+          <!-- Hall Header -->
+          <tr>
+            <td style="background-color:#7b0000;padding:14px 32px;">
+              <h2 style="margin:0;font-size:18px;color:#ffffff;font-weight:bold;">{{ hall_name }}</h2>
+            </td>
+          </tr>
+
+          {% if not ordered %}
+          <!-- Hall closed today -->
+          <tr>
+            <td style="padding:20px 32px;">
+              <p style="margin:0;color:#888888;font-style:italic;font-size:14px;">No menu available for today.</p>
+            </td>
+          </tr>
+
+          {% else %}
+            {% set ns.has_any = true %}
+            {% for meal_name, stations in ordered %}
+            <!-- Meal Period -->
+            <tr>
+              <td style="padding:0 32px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                       style="border-top:2px solid #ffcc00;margin-top:20px;">
+                  <tr>
+                    <td style="padding:10px 0 6px;">
+                      <h3 style="margin:0;font-size:15px;color:#990000;font-weight:bold;text-transform:uppercase;letter-spacing:0.8px;">{{ meal_name }}</h3>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+              {% for station_name, station in stations.items() %}
+              <!-- Station -->
+              <tr>
+                <td style="padding:4px 32px 12px 32px;">
+                  <p style="margin:0 0 2px;font-size:13px;color:#666666;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;">{{ station_name }}</p>
+                  {% if station.subtitle %}<p style="margin:0 0 6px;font-size:12px;color:#999999;font-style:italic;">{{ station.subtitle }}</p>{% endif %}
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    {% for entry in station.entries %}
+                    <tr>
+                      <td style="padding:3px 0;font-size:14px;color:#333333;border-bottom:1px solid #f0f0f0;">
+                        {{ entry.item }}
+                        {% for pref in entry.preferences %}
+                          {% if pref in preference_labels %}
+                            {% set label, icon = preference_labels[pref] %}
+                            <span title="{{ label }}" style="font-size:13px;">{{ icon }}</span>
+                          {% endif %}
+                        {% endfor %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </table>
+                </td>
+              </tr>
+              {% endfor %}
+
+            {% endfor %}
+          {% endif %}
+
+          <!-- Spacer between halls -->
+          <tr>
+            <td style="height:24px;background-color:#f5f5f5;"></td>
+          </tr>
+
+        {% endfor %}
+
+        <!-- ── FOOTER ── -->
+        <tr>
+          <td style="background-color:#1a1a1a;padding:24px 32px;">
+            <p style="margin:0 0 8px;font-size:13px;color:#aaaaaa;text-align:center;">
+              Menus sourced from <a href="https://hospitality.usc.edu/dining-hall-menus/" style="color:#ffcc00;text-decoration:none;">hospitality.usc.edu</a>
+              and are subject to change.
+            </p>
+            <p style="margin:0;font-size:12px;color:#666666;text-align:center;">
+              You&rsquo;re receiving this because you subscribed to USC Dining Daily.
+              <br />
+              <a href="{{ unsubscribe_url | default('{{unsubscribe}}') }}" style="color:#aaaaaa;">Unsubscribe</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+      <!-- /Card -->
+
+    </td>
+  </tr>
+</table>
+<!-- /Wrapper -->
+
+</body>
+</html>
