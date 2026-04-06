@@ -57,9 +57,6 @@
                             {% endfor %}
                           </p>
                           {% endfor %}
-                          {% if highlight.entries|length > 5 %}
-                          <p style="margin:4px 0 0;font-size:11px;color:#aaaaaa;">+{{ highlight.entries|length - 5 }} more</p>
-                          {% endif %}
                         {% else %}
                           <p style="margin:0;font-size:12px;color:#aaaaaa;font-style:italic;">Not available today</p>
                         {% endif %}
