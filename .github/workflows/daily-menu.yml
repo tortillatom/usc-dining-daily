@@ -2,7 +2,8 @@ name: Daily Dining Newsletter
 
 on:
   schedule:
-    - cron: '0 14 * * *'  # 7:00 AM PT (UTC-7 in summer / UTC-8 in winter — adjust for DST)
+    - cron: '30 6 6 4 *'  # 11:30 PM PT April 5 (test run)
+    - cron: '0 14 * * *'  # 7:00 AM PT daily
   workflow_dispatch: {}    # Manual trigger for testing
 
 jobs:
