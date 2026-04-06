@@ -39,7 +39,7 @@
                 {% set highlight = find_highlight(hall_name, meals) %}
                 {% set entries = highlight.entries[:5] if highlight and highlight.entries else [] %}
                 {% if not loop.first %}<td width="8" style="font-size:0;line-height:0;">&nbsp;</td>{% endif %}
-                <td valign="top" style="background-color:#fff8e1;border-top:3px solid #ffcc00;padding:10px;">
+                <td width="184" valign="top" style="background-color:#fff8e1;border-top:3px solid #ffcc00;padding:10px;">
                   <p style="margin:0 0 4px;font-size:12px;font-weight:bold;color:#333333;">{{ highlight.label if highlight else "—" }}</p>
                   <p style="margin:0 0 6px;font-size:10px;color:#888888;text-transform:uppercase;letter-spacing:0.5px;">{{ hall_name }}</p>
                   {% if entries %}
