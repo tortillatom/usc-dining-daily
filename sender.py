@@ -1,22 +1,28 @@
 """
-sender.py — Fetches subscribers from Beehiiv, sends emails via Resend.
-
-Beehiiv: manages subscribers, signup page, web archive (free tier).
-Resend:  handles actual email delivery via API (free tier, 3k/month).
+sender.py — Sends the newsletter via Gmail SMTP.
 """
 
 import os
-import requests
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-RESEND_API_URL = "https://api.resend.com/emails"
-BEEHIIV_API_BASE = "https://api.beehiiv.com/v2"
+GMAIL_SMTP = "smtp.gmail.com"
+GMAIL_PORT = 587
 
 
-def _resend_key() -> str:
-    key = os.environ.get("RESEND_API_KEY", "")
-    if not key:
-        raise EnvironmentError("RESEND_API_KEY environment variable is not set.")
-    return key
+def _gmail_address() -> str:
+    addr = os.environ.get("GMAIL_ADDRESS", "")
+    if not addr:
+        raise EnvironmentError("GMAIL_ADDRESS environment variable is not set.")
+    return addr
+
+
+def _gmail_app_password() -> str:
+    pw = os.environ.get("GMAIL_APP_PASSWORD", "")
+    if not pw:
+        raise EnvironmentError("GMAIL_APP_PASSWORD environment variable is not set.")
+    return pw
 
 
 def _beehiiv_key() -> str:
@@ -33,16 +39,9 @@ def _pub_id() -> str:
     return pub_id
 
 
-def _sender_email() -> str:
-    return os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
-
-
-def _sender_name() -> str:
-    return os.environ.get("SENDER_NAME", "USC Dining Daily")
-
-
 def get_subscribers() -> list[str]:
     """Fetch all active subscriber emails from Beehiiv."""
+    import requests
     emails = []
     cursor = None
     headers = {"Authorization": f"Bearer {_beehiiv_key()}"}
@@ -53,7 +52,7 @@ def get_subscribers() -> list[str]:
             params["after"] = cursor
 
         resp = requests.get(
-            f"{BEEHIIV_API_BASE}/publications/{_pub_id()}/subscriptions",
+            f"https://api.beehiiv.com/v2/publications/{_pub_id()}/subscriptions",
             headers=headers,
             params=params,
             timeout=15,
@@ -71,26 +70,25 @@ def get_subscribers() -> list[str]:
     return emails
 
 
-def _send_one(html_content: str, subject: str, to_email: str) -> None:
-    """Send a single email via Resend."""
-    payload = {
-        "from": f"{_sender_name()} <{_sender_email()}>",
-        "to": [to_email],
-        "subject": subject,
-        "html": html_content,
-    }
-    resp = requests.post(
-        RESEND_API_URL,
-        json=payload,
-        headers={"Authorization": f"Bearer {_resend_key()}"},
-        timeout=30,
-    )
-    if not resp.ok:
-        raise RuntimeError(f"Resend failed for {to_email} ({resp.status_code}): {resp.text}")
+def _build_message(html_content: str, subject: str, to_email: str) -> MIMEMultipart:
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"USC Dining Daily <{_gmail_address()}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(html_content, "html"))
+    return msg
+
+
+def _smtp_connection():
+    conn = smtplib.SMTP(GMAIL_SMTP, GMAIL_PORT)
+    conn.ehlo()
+    conn.starttls()
+    conn.login(_gmail_address(), _gmail_app_password())
+    return conn
 
 
 def send_newsletter(html_content: str, subject: str) -> bool:
-    """Fetch all Beehiiv subscribers and send the newsletter to each via Resend."""
+    """Fetch all Beehiiv subscribers and send the newsletter via Gmail SMTP."""
     subscribers = get_subscribers()
     if not subscribers:
         print("[sender] No active subscribers — nothing to send.")
@@ -98,19 +96,24 @@ def send_newsletter(html_content: str, subject: str) -> bool:
 
     print(f"[sender] Sending to {len(subscribers)} subscribers...")
     failed = []
-    for email in subscribers:
-        try:
-            _send_one(html_content, subject, email)
-        except RuntimeError as e:
-            print(f"[sender] WARNING: {e}")
-            failed.append(email)
+
+    with _smtp_connection() as conn:
+        for email in subscribers:
+            try:
+                msg = _build_message(html_content, subject, email)
+                conn.sendmail(_gmail_address(), email, msg.as_string())
+            except Exception as e:
+                print(f"[sender] WARNING: failed for {email}: {e}")
+                failed.append(email)
 
     print(f"[sender] Done. {len(subscribers) - len(failed)}/{len(subscribers)} delivered.")
     return True
 
 
 def send_test_email(html_content: str, subject: str, to_email: str) -> bool:
-    """Send a single test email via Resend."""
-    _send_one(html_content, subject, to_email)
+    """Send a single test email via Gmail SMTP."""
+    with _smtp_connection() as conn:
+        msg = _build_message(html_content, subject, to_email)
+        conn.sendmail(_gmail_address(), to_email, msg.as_string())
     print(f"[sender] Test email sent to {to_email}.")
     return True
