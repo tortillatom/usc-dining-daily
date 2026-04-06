@@ -22,6 +22,9 @@ jobs:
       - name: Send newsletter
         run: python main.py
         env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           BEEHIIV_API_KEY: ${{ secrets.BEEHIIV_API_KEY }}
           BEEHIIV_PUB_ID: ${{ secrets.BEEHIIV_PUB_ID }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_NAME: ${{ secrets.SENDER_NAME }}
           LOGO_URL: ${{ secrets.LOGO_URL }}
