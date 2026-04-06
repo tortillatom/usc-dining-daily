@@ -32,37 +32,31 @@
         <tr>
           <td style="padding:20px 16px 8px;">
             <p style="margin:0 0 12px;font-size:11px;font-weight:bold;color:#990000;text-transform:uppercase;letter-spacing:1px;">Today's Highlights</p>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="6">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 {% for hall_name, meals in halls.items() %}
                 {% if hall_name in hall_highlights %}
                 {% set highlight = find_highlight(hall_name, meals) %}
                 {% set entries = highlight.entries[:5] if highlight and highlight.entries else [] %}
-                <td width="33%" valign="top" style="padding:0;">
-                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                         style="background-color:#fff8e1;border-top:3px solid #ffcc00;border-radius:4px;">
-                    <tr>
-                      <td valign="top" style="padding:10px 10px;">
-                        <p style="margin:0 0 4px;font-size:12px;font-weight:bold;color:#333333;">{{ highlight.label if highlight else "—" }}</p>
-                        <p style="margin:0 0 6px;font-size:10px;color:#888888;text-transform:uppercase;letter-spacing:0.5px;">{{ hall_name }}</p>
-                        {% if entries %}
-                          {% for entry in entries %}
-                          <p style="margin:0;font-size:12px;color:#555555;line-height:1.7;">
-                            {{ entry.item }}
-                            {% for pref in entry.preferences %}
-                              {% if pref in preference_labels %}
-                                {% set label, icon = preference_labels[pref] %}
-                                <span title="{{ label }}">{{ icon }}</span>
-                              {% endif %}
-                            {% endfor %}
-                          </p>
-                          {% endfor %}
-                        {% else %}
-                          <p style="margin:0;font-size:12px;color:#aaaaaa;font-style:italic;">Not available today</p>
+                {% if not loop.first %}<td width="8" style="font-size:0;line-height:0;">&nbsp;</td>{% endif %}
+                <td valign="top" style="background-color:#fff8e1;border-top:3px solid #ffcc00;padding:10px;">
+                  <p style="margin:0 0 4px;font-size:12px;font-weight:bold;color:#333333;">{{ highlight.label if highlight else "—" }}</p>
+                  <p style="margin:0 0 6px;font-size:10px;color:#888888;text-transform:uppercase;letter-spacing:0.5px;">{{ hall_name }}</p>
+                  {% if entries %}
+                    {% for entry in entries %}
+                    <p style="margin:0;font-size:12px;color:#555555;line-height:1.7;">
+                      {{ entry.item }}
+                      {% for pref in entry.preferences %}
+                        {% if pref in preference_labels %}
+                          {% set label, icon = preference_labels[pref] %}
+                          <span title="{{ label }}">{{ icon }}</span>
                         {% endif %}
-                      </td>
-                    </tr>
-                  </table>
+                      {% endfor %}
+                    </p>
+                    {% endfor %}
+                  {% else %}
+                    <p style="margin:0;font-size:12px;color:#aaaaaa;font-style:italic;">Not available today</p>
+                  {% endif %}
                 </td>
                 {% endif %}
                 {% endfor %}
